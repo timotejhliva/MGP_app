@@ -1,0 +1,33 @@
+/* src/App.css */
+.container {
+  max-width: 800px;
+  margin: auto;
+  font-family: sans-serif;
+}
+
+.race-card {
+  border: 1px solid #ccc;
+  padding: 12px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  background: #f9f9f9;
+}
+
+.riders span {
+  margin-right: 5px;
+  font-size: 20px;
+}
+
+.chat {
+  margin-top: 30px;
+  border-top: 1px solid #ddd;
+  padding-top: 20px;
+}
+
+.messages {
+  height: 150px;
+  overflow-y: auto;
+  background: #eee;
+  padding: 10px;
+  margin-bottom: 10px;
+}
