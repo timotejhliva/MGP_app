@@ -16,7 +16,7 @@ const Chat = () => {
     fetch('/chat/history')
       .then((res) => res.json())
       .then((data) => {
-        const messagesOnly = data.map(item => item.message);
+        const messagesOnly = data.map(item => item.message); //.message/.text
         setMessages(messagesOnly);
         // console.log(messagesOnly)
       });
@@ -56,10 +56,10 @@ const Chat = () => {
       <h2>Chat</h2>
       <div className="messages">
         {messages.map((msg, i) => (
-          <div key={i} className="message">{msg.text}</div>
-          //   <div key={i} className="message">
-          //   {typeof msg === "string" ? msg : msg.text}
-          //   </div>
+          // <div key={i} className="message">{msg}</div>
+            <div key={i} className="message">
+            {typeof msg === "string" ? msg : msg.text}
+            </div>
         ))}
           {/* Posledný neviditeľný element na scroll */}
           <div ref={messagesEndRef} />

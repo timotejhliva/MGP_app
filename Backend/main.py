@@ -133,7 +133,7 @@ def get_last_messages(limit: int = 20):
     # Vrátime v chronologickom poradí (najstaršia prvá)
     return [
         {"user": row[0], "message": row[1], "timestamp": row[2]}
-        for row in reversed(rows)
+        for row in rows
     ]
 
 # ----------------------------------------------------------------------------
@@ -158,9 +158,7 @@ async def websocket_endpoint(websocket: WebSocket):
             data = await websocket.receive_text()
             msg = json.loads(data)
             user = msg.get("user", "anonym")
-            message = msg.get("message", "") or msg.get("text")
-            print(msg)
-            print(message)
+            message = msg.get("message", "") or msg.get("text", "")
 
             save_msg_to_DB(user, message)
 
@@ -173,7 +171,7 @@ async def websocket_endpoint(websocket: WebSocket):
 def get_messages():
     # 1. Pošleme históriu chatu novému klientovi
     history = get_last_messages(limit=20)
-    # print(history)
+    print(history)
     return history
 
 
