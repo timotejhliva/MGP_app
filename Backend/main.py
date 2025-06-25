@@ -27,6 +27,8 @@ RACES = [
     }
 ]
 
+limit_history_message = 5
+
 # ----------------------------------------------------------------------------
 
 conn = sqlite3.connect("motokary.db")
@@ -124,7 +126,7 @@ def get_last_messages(limit: int = 20):
     conn = sqlite3.connect("motokary.db")
     cursor = conn.cursor()
 
-    cursor.execute("SELECT user, message, timestamp FROM chat_messages")
+    cursor.execute("SELECT user, message, timestamp FROM chat_messages ORDER BY timestamp DESC LIMIT ?", (limit,))
 
     rows = cursor.fetchall()
     conn.close()
@@ -133,7 +135,7 @@ def get_last_messages(limit: int = 20):
     # Vrátime v chronologickom poradí (najstaršia prvá)
     return [
         {"user": row[0], "message": row[1], "timestamp": row[2]}
-        for row in rows
+        for row in reversed(rows)
     ]
 
 # ----------------------------------------------------------------------------
@@ -170,7 +172,7 @@ async def websocket_endpoint(websocket: WebSocket):
 @app.get("/chat/history")
 def get_messages():
     # 1. Pošleme históriu chatu novému klientovi
-    history = get_last_messages(limit=20)
+    history = get_last_messages(limit=limit_history_message)
     print(history)
     return history
 
