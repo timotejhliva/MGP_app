@@ -160,22 +160,59 @@ def get_messages():
 # Endpoint na ziskanie jazd
 @app.get("/api/races")
 def get_races():
-    return RACES[::-1]  # najnovšia prvá
+    conn = sqlite3.connect("motokary.db")
+    cursor = conn.cursor()
+
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    cursor.execute("SELECT id, id_day, date, time, adults_count, juniors_count, children_count, note, grouped FROM rides WHERE date = ?"
+                   "ORDER BY id_day, (today,)"
+                   )
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    races = [
+        {
+            "id": row[0],
+            "id_day": row[1],
+            "date": row[2],
+            "time": row[3],
+            "adults_count": row[4],
+            "juniors_count": row[5],
+            "children_count": row[6],
+            "note": row[7],
+            "grouped": bool(row[8]) if row[8] is not None else False
+        }
+        for row in rows
+    ]
+
+    return races
 
 # Pridanie jazdy
 @app.post("/api/races/new")
 def create_race():
-    new_id = max([r["id"] for r in RACES], default=0) + 1
-    new_race = {
-        "id": new_id,
-        "number": new_id,
-        "capacity": 8,
-        "completed": False,
-        "riders": [],
-        "grouped": False
-    }
-    RACES.append(new_race)
-    return {"status": "ok", "race": new_race}
+    today = datetime.now().strftime("%Y-%m-%d")
+    conn = sqlite3.connect("motokary.db")
+    cursor = conn.cursor()
+
+    # Zisti koľko jázd je dnes, aby sme nastavili id_day od 1
+    cursor.execute("SELECT COUNT(*) FROM rides WHERE date = ?", (today,))
+    id_day = cursor.fetchone()[0] + 1
+
+    # Vlož novú jazdu s nulovými počtami a poznámkou prázdnu
+    cursor.execute(
+        "INSERT INTO rides (id_day, date, time, adults_count, juniors_count, children_count, note, grouped) "
+        "VALUES (?, ?, ?, 0, 0, 0, '', 0)",
+        (id_day, today, 0)
+    )
+
+    conn.commit()
+    conn.close()
+
+    return {"status": "created", "id_day": id_day}
+
+
 
 # Úprava počtov jazdcov
 @app.patch("/api/races/{race_id}/adjust")
