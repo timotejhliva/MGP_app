@@ -1,0 +1,95 @@
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 20px;
+}
+
+h1 {
+  text-align: center;
+  color: #333;
+}
+
+/* Štýl kontajnera */
+.manager-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Štýl pre tlačidlo pridania */
+.add-button {
+  display: inline-block;
+  padding: 10px 20px;
+  margin-bottom: 20px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.add-button:hover {
+  background-color: #0056b3;
+}
+
+/* Blok pre jednu jazdu */
+.race-item {
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 4px;
+}
+
+.race-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.rider-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.rider-label {
+  width: 100px;
+  text-transform: capitalize;
+}
+
+.counter-buttons {
+  display: flex;
+  align-items: center;
+}
+
+.counter-buttons button {
+  width: 30px;
+  height: 30px;
+  border: none;
+  background-color: #28a745;
+  color: white;
+  font-size: 18px;
+  border-radius: 4px;
+  margin: 0 5px;
+  cursor: pointer;
+}
+
+.counter-buttons button.minus {
+  background-color: #dc3545;
+}
+
+.checkbox-label {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.scrollable-races {
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 10px;
+}

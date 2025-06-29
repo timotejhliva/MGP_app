@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 from pydantic import BaseModel
@@ -31,30 +31,7 @@ limit_history_message = 5
 
 # ----------------------------------------------------------------------------
 
-conn = sqlite3.connect("motokary.db")
-cursor = conn.cursor()
 
-# Tabuľka jázd
-cursor.execute("CREATE TABLE IF NOT EXISTS rides ("
-               "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-               "id_day INTEGER NOT NULL, "
-               "date TEXT NOT NULL, "
-               "time INTEGER NOT NULL, "
-               "adults_count INTEGER NOT NULL, "
-               "juniors_count INTEGER NOT NULL, "
-               "children_count INTEGER NOT NULL, "
-               "note TEXT)"
-)
-
-# Tabuľka chatu
-cursor.execute("CREATE TABLE IF NOT EXISTS chat_messages ("
-               "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-               "user TEXT NOT NULL, "
-               "message TEXT NOT NULL, "
-               "timestamp TEXT NOT NULL)"
-)
-
-conn.commit()
 
 # ----------------------------------------------------------------------------
 
@@ -177,19 +154,90 @@ def get_messages():
     return history
 
 
+
+
+
+# Endpoint na ziskanie jazd
 @app.get("/api/races")
 def get_races():
-    return RACES
+    return RACES[::-1]  # najnovšia prvá
 
-@app.post("/api/races/{race_id}/confirm")
-def confirm_race(race_id: int):
-    for race in RACES:
-        if race["id"] == race_id:
-            race["completed"] = True
-            return {"status": "ok"}
-    return {"status": "not found"}
+# Pridanie jazdy
+@app.post("/api/races/new")
+def create_race():
+    new_id = max([r["id"] for r in RACES], default=0) + 1
+    new_race = {
+        "id": new_id,
+        "number": new_id,
+        "capacity": 8,
+        "completed": False,
+        "riders": [],
+        "grouped": False
+    }
+    RACES.append(new_race)
+    return {"status": "ok", "race": new_race}
+
+# Úprava počtov jazdcov
+@app.patch("/api/races/{race_id}/adjust")
+def adjust_race(race_id: int, delta: dict):
+    race = next((r for r in RACES if r["id"] == race_id), None)
+    if not race:
+        return {"status": "not found"}
+
+    for t in ["adult", "junior", "child"]:
+        if t in delta:
+            if delta[t] > 0:
+                race["riders"].extend({"name": "unknown", "type": t} for _ in range(delta[t]))
+            elif delta[t] < 0:
+                count = 0
+                race["riders"] = [r for r in race["riders"] if not (r["type"] == t and (count := count + 1) <= abs(delta[t]))]
+
+    return {"status": "ok", "riders": race["riders"]}
+
+# Prepnutie "spojené skupiny"
+@app.patch("/api/races/{race_id}/grouped")
+def toggle_grouped(race_id: int, grouped: bool):
+    race = next((r for r in RACES if r["id"] == race_id), None)
+    if not race:
+        return {"status": "not found"}
+    race["grouped"] = grouped
+    return {"status": "ok"}
 
 
+
+
+
+
+
+
+@app.post("/chat/register")
+def register_user(user: str):
+    conn = sqlite3.connect("motokary.db")
+    cursor = conn.cursor()
+    timestamp = datetime.utcnow().isoformat()
+
+    try:
+        cursor.execute(
+            "INSERT INTO chat_users (username, created_at) VALUES (?, ?)",
+            (user, timestamp)
+        )
+        conn.commit()
+    except sqlite3.IntegrityError:
+        raise HTTPException(status_code=400, detail="Používateľ už existuje")
+
+    conn.close()
+    return {"status": "ok", "user": user}
+
+@app.get("/chat/users")
+def get_users():
+    conn = sqlite3.connect("motokary.db")
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT username, created_at FROM chat_users ORDER BY username")
+    users = cursor.fetchall()
+    conn.close()
+
+    return [{"username": u, "joined": t} for u, t in users]
 
 
 
